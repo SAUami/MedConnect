@@ -1,0 +1,362 @@
+@import "tailwindcss";
+
+/* =========================================================
+   MedConnect Design Tokens & Custom Properties
+   ========================================================= */
+:root {
+  --primary-blue: #2563eb;
+  --primary-cyan: #06b6d4;
+  --accent-emerald: #10b981;
+  --accent-purple: #8b5cf6;
+  --glow-color: rgba(37, 99, 235, 0.35);
+}
+
+@layer base {
+  * {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #f8fafc;
+    color: #0f172a;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  /* Custom Smooth Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+}
+
+/* =========================================================
+   Keyframe Animations
+   ========================================================= */
+
+/* 1. Subtle Floating Levitation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* 2. ECG Rhythmic Heartbeat */
+@keyframes heartBeat {
+  0% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.18);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.12);
+  }
+  70% {
+    transform: scale(1);
+  }
+}
+
+/* 3. Glowing Ambient Pulse */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.2), 0 0 30px rgba(6, 182, 212, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(37, 99, 235, 0.45), 0 0 50px rgba(6, 182, 212, 0.25);
+  }
+}
+
+/* 4. Shimmer Effect across Cards */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* 5. Smooth Fade In with Slide Up */
+@keyframes slideUpFade {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 6. Dynamic Moving Gradient Background */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* 7. Ping Wave Ripple for Live Doctors / Calls */
+@keyframes liveRipple {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+/* 8. Typewriter Blinking Cursor */
+@keyframes blinkCursor {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* 9. Animated Text Gradient Shimmer */
+@keyframes textShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* 10. Individual Letter Pop / Reveal */
+@keyframes letterPop {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 11. Subtle Float Reverse */
+@keyframes floatReverse {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+/* 12. Soft Halo Ambient Glow */
+@keyframes ambientHalo {
+  0%, 100% {
+    filter: drop-shadow(0 0 15px rgba(37, 99, 235, 0.25));
+  }
+  50% {
+    filter: drop-shadow(0 0 25px rgba(6, 182, 212, 0.45));
+  }
+}
+
+/* =========================================================
+   Utility Animation Classes
+   ========================================================= */
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: floatReverse 4.5s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float 5s ease-in-out infinite 1.5s;
+}
+
+.animate-heartbeat {
+  animation: heartBeat 2s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 3s infinite;
+}
+
+.animate-fade-in {
+  animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradientShift 8s ease infinite;
+}
+
+.live-indicator {
+  animation: liveRipple 2s infinite;
+}
+
+/* Typewriter cursor blinking class */
+.cursor-blink {
+  animation: blinkCursor 0.85s step-end infinite;
+}
+
+/* Dynamic Letter Shimmer Text */
+.text-shimmer {
+  background: linear-gradient(
+    110deg,
+    #1d4ed8 0%,
+    #0284c7 20%,
+    #06b6d4 40%,
+    #3b82f6 60%,
+    #0d9488 80%,
+    #1d4ed8 100%
+  );
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: textShimmer 5s ease infinite;
+}
+
+/* Letter Pop Entry */
+.letter-animated {
+  display: inline-block;
+  animation: letterPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Ambient glow filter */
+.ambient-glow {
+  animation: ambientHalo 4s ease-in-out infinite;
+}
+
+/* =========================================================
+   Glassmorphism & Advanced Card Styles
+   ========================================================= */
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+}
+
+.glass-card-dark {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.4);
+}
+
+/* Hover Lift micro-interaction */
+.hover-lift {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hover-lift:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px -10px rgba(37, 99, 235, 0.15), 0 5px 15px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Shimmer Highlight Button / Card */
+.shimmer-btn {
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+}
+.shimmer-btn:hover {
+  animation: shimmer 1.5s infinite;
+}
+
+/* Medical Hero Gradient Mesh Background */
+.hero-mesh {
+  background-color: #f8fafc;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.12) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.14) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(139, 92, 246, 0.08) 0px, transparent 50%);
+}
+
+/* Medical Cross Grid Pattern */
+.bg-grid-pattern {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(226, 232, 240, 0.6) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(226, 232, 240, 0.6) 1px, transparent 1px);
+}
+
+/* Interactive Badge Glow */
+.badge-glow {
+  position: relative;
+}
+.badge-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 12px currentColor;
+  opacity: 0.3;
+  transition: opacity 0.3s;
+}
+.badge-glow:hover::after {
+  opacity: 0.6;
+}
+
+/* =========================================================
+   Print Optimization for Prescriptions
+   ========================================================= */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-prescription, #printable-prescription * {
+    visibility: visible;
+  }
+  #printable-prescription {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 24px;
+    background: #ffffff !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  header, footer, button, nav {
+    display: none !important;
+  }
+}

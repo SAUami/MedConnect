@@ -8,22 +8,59 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
- const authRoutes = require('./routes/authroutes');
- app.use('/api/auth', authRoutes); 
- console.log('✅ Auth routes mounted at /api/auth');
 
-// Test route
+// Routes
+const authRoutes = require('./routes/authroutes');
+const doctorRoutes = require('./routes/doctorRoutes');
+const appointmentRoutes = require('./routes/appointmentRoutes');
+const prescriptionRoutes = require('./routes/prescriptionRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const clinicRoutes = require('./routes/clinicRoutes');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/doctors', doctorRoutes);
+app.use('/api/appointments', appointmentRoutes);
+app.use('/api/prescriptions', prescriptionRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/clinics', clinicRoutes);
+
+// Health check route
 app.get('/', (req, res) => {
-  res.send('MedConnect backend is running!');
+  res.json({
+    status: 'online',
+    message: 'MedConnect API is running smoothly 🏥',
+    timestamp: new Date().toISOString(),
+  });
 });
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ MongoDB connected successfully'))
-  .catch((err) => console.log('❌ MongoDB connection error:', err));
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ message: `Route not found: ${req.method} ${req.url}` });
+});
 
-// Start server
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(500).json({ message: 'Internal server error', error: err.message });
+});
+
+// Connect to MongoDB & Start Server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log('✅ MongoDB connected successfully');
+    // Only listen if not required by a test script
+    if (process.env.NODE_ENV !== 'test') {
+      app.listen(PORT, () => {
+        console.log(`🚀 MedConnect Server running on http://localhost:${PORT}`);
+      });
+    }
+  })
+  .catch((err) => {
+    console.error('❌ MongoDB connection error:', err);
+  });
+
+module.exports = app;
