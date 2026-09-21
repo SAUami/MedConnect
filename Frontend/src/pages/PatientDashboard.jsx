@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import PrescriptionTemplate from '../components/PrescriptionTemplate';
 
 const PatientDashboard = () => {
   const { user } = useAuth();
@@ -95,10 +96,6 @@ const PatientDashboard = () => {
     } finally {
       setReviewSubmitting(false);
     }
-  };
-
-  const printPrescription = () => {
-    window.print();
   };
 
   return (
@@ -234,6 +231,22 @@ const PatientDashboard = () => {
                           <span className="italic">{appt.symptoms}</span>
                         </div>
                       )}
+
+                      {/* Payment Status Badge */}
+                      <div className="mt-3 flex items-center justify-between text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                        <span className="text-slate-500 font-semibold">Payment:</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`font-bold px-2 py-0.5 rounded-md uppercase tracking-wider text-[10px] ${
+                            appt.paymentStatus === 'paid'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          }`}>
+                            {appt.paymentStatus === 'paid'
+                              ? `Paid (₹${appt.amount || doc?.fees || 500} • ${appt.paymentMethod || 'UPI'})`
+                              : `Pay at Clinic (₹${appt.amount || doc?.fees || 500})`}
+                          </span>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Actions */}
@@ -391,143 +404,12 @@ const PatientDashboard = () => {
         </div>
       )}
 
-      {/* MODAL 1: HIGH FIDELITY PRINTABLE PRESCRIPTION MODAL */}
+      {/* MODAL 1: EXACT OFFICIAL MEDCONNECT PRESCRIPTION TEMPLATE */}
       {selectedPrescription && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl p-6 md:p-8 space-y-6 my-8 text-left relative">
-            {/* Modal actions */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200">
-              <div className="flex items-center gap-2">
-                <HeartPulse className="w-5 h-5 text-blue-600" />
-                <span className="font-bold text-slate-800 text-sm">Official Medical Prescription</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={printPrescription}
-                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm"
-                >
-                  <Printer className="w-3.5 h-3.5" /> Print / PDF
-                </button>
-                <button
-                  onClick={() => setSelectedPrescription(null)}
-                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-
-            {/* Printable Area */}
-            <div id="printable-prescription" className="p-6 bg-slate-50 border border-slate-200 rounded-2xl space-y-6">
-              {/* Clinic & Doctor Header */}
-              <div className="flex justify-between items-start border-b border-slate-300 pb-4">
-                <div>
-                  <h2 className="text-xl font-extrabold text-blue-900">
-                    {selectedPrescription.doctor?.user?.name || 'Dr. Specialist'}
-                  </h2>
-                  <p className="text-xs font-semibold text-slate-600">{selectedPrescription.doctor?.qualifications}</p>
-                  <p className="text-xs text-blue-700 font-bold">{selectedPrescription.doctor?.specialization}</p>
-                  <p className="text-[11px] text-slate-500 mt-1">{selectedPrescription.doctor?.clinicAddress}</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-lg font-black text-blue-600">MedConnect</div>
-                  <div className="text-[10px] text-slate-400 uppercase tracking-wider">Digital OPD Clinic</div>
-                  <div className="text-xs font-medium text-slate-600 mt-2">
-                    Date: {new Date(selectedPrescription.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
-              </div>
-
-              {/* Patient info */}
-              <div className="grid grid-cols-3 gap-2 bg-white p-3 rounded-xl border border-slate-200 text-xs text-slate-700">
-                <div>
-                  <span className="text-slate-400 block text-[10px]">PATIENT NAME</span>
-                  <span className="font-bold text-slate-900">{selectedPrescription.patient?.name || user?.name}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px]">AGE / GENDER</span>
-                  <span className="font-semibold">
-                    {selectedPrescription.patient?.age || '28'} Y / {selectedPrescription.patient?.gender || 'Male'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px]">RX ID</span>
-                  <span className="font-mono text-[11px] text-slate-500 truncate block">
-                    {selectedPrescription._id}
-                  </span>
-                </div>
-              </div>
-
-              {/* Diagnosis */}
-              <div>
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
-                  Primary Diagnosis
-                </span>
-                <p className="text-sm font-bold text-slate-900 bg-white p-2.5 rounded-xl border border-slate-200">
-                  {selectedPrescription.diagnosis}
-                </p>
-              </div>
-
-              {/* Medicines table */}
-              <div>
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">
-                  Rx - Prescribed Medicines
-                </span>
-                <table className="w-full text-xs text-left bg-white border border-slate-200 rounded-xl overflow-hidden">
-                  <thead className="bg-slate-100 text-slate-600 font-bold text-[10px]">
-                    <tr>
-                      <th className="p-2.5">Medicine</th>
-                      <th className="p-2.5">Dosage</th>
-                      <th className="p-2.5">Timing / Frequency</th>
-                      <th className="p-2.5">Duration</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {selectedPrescription.medicines?.map((m, i) => (
-                      <tr key={i}>
-                        <td className="p-2.5 font-bold text-slate-900">{m.name}</td>
-                        <td className="p-2.5">{m.dosage}</td>
-                        <td className="p-2.5">{m.frequency}</td>
-                        <td className="p-2.5">{m.duration}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Instructions */}
-              {selectedPrescription.instructions && (
-                <div>
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
-                    Special Advice / Diet
-                  </span>
-                  <p className="text-xs text-slate-700 bg-white p-2.5 rounded-xl border border-slate-200">
-                    {selectedPrescription.instructions}
-                  </p>
-                </div>
-              )}
-
-              {/* Follow-up & Signature footer */}
-              <div className="pt-4 border-t border-slate-300 flex justify-between items-end">
-                <div>
-                  {selectedPrescription.followUpDate && (
-                    <div className="text-xs text-amber-700 font-bold">
-                      Follow Up: {selectedPrescription.followUpDate}
-                    </div>
-                  )}
-                  <div className="text-[10px] text-slate-400 mt-1">Generated electronically via MedConnect System</div>
-                </div>
-                <div className="text-center">
-                  <div className="font-serif italic font-bold text-blue-900 text-sm">
-                    {selectedPrescription.doctor?.user?.name || 'Dr. Specialist'}
-                  </div>
-                  <div className="border-t border-slate-400 w-32 mt-1"></div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">Doctor's Digital Signature</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <PrescriptionTemplate
+          prescription={selectedPrescription}
+          onClose={() => setSelectedPrescription(null)}
+        />
       )}
 
       {/* MODAL 2: WRITE DOCTOR REVIEW */}

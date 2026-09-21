@@ -7,7 +7,7 @@ const { verifyToken, authorizeRoles } = require('../middleware/auth');
 // BOOK APPOINTMENT (Patient)
 router.post('/book', verifyToken, async (req, res) => {
   try {
-    const { doctorId, date, timeSlot, symptoms, consultationType } = req.body || {};
+    const { doctorId, date, timeSlot, symptoms, consultationType, paymentMethod, paymentStatus, amount, transactionId } = req.body || {};
 
     if (!doctorId || !date || !timeSlot) {
       return res.status(400).json({ message: 'Doctor, date, and time slot are required' });
@@ -40,6 +40,11 @@ router.post('/book', verifyToken, async (req, res) => {
       meetingLink = `https://meet.jit.si/${randomRoom}`;
     }
 
+    const calculatedAmount = amount !== undefined ? amount : (doctor.fees || 0);
+    const chosenMethod = paymentMethod || 'cash';
+    const chosenStatus = paymentStatus || (chosenMethod === 'cash' ? 'pending' : 'paid');
+    const finalTxnId = transactionId || (chosenStatus === 'paid' ? `TXN-MED-${Date.now().toString().slice(-6)}${Math.floor(100 + Math.random() * 900)}` : '');
+
     const appointment = new Appointment({
       patient: req.user._id,
       doctor: doctorId,
@@ -49,6 +54,10 @@ router.post('/book', verifyToken, async (req, res) => {
       consultationType: consultationType || 'in-clinic',
       meetingLink,
       status: 'confirmed',
+      paymentMethod: chosenMethod,
+      paymentStatus: chosenStatus,
+      amount: calculatedAmount,
+      transactionId: finalTxnId,
     });
 
     await appointment.save();

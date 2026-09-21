@@ -18,6 +18,10 @@ const medicineSchema = new mongoose.Schema({
     type: String,
     default: '5 days',
   },
+  instructions: {
+    type: String,
+    default: '',
+  },
 });
 
 const prescriptionSchema = new mongoose.Schema(
@@ -41,6 +45,16 @@ const prescriptionSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+    },
+    chiefComplaint: {
+      type: String,
+      default: '',
+    },
+    vitals: {
+      bp: { type: String, default: '' },
+      temp: { type: String, default: '' },
+      pulse: { type: String, default: '' },
+      weight: { type: String, default: '' },
     },
     medicines: [medicineSchema],
     instructions: {

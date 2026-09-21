@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import PaymentModal from '../components/PaymentModal';
 
 const DoctorDetail = () => {
   const { id } = useParams();
@@ -37,6 +38,7 @@ const DoctorDetail = () => {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(null);
   const [bookingError, setBookingError] = useState('');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // Generate next 7 days list
   useEffect(() => {
@@ -116,7 +118,7 @@ const DoctorDetail = () => {
     ];
   };
 
-  const handleBookingSubmit = async (e) => {
+  const handleBookingSubmit = (e) => {
     e.preventDefault();
     setBookingError('');
 
@@ -130,6 +132,12 @@ const DoctorDetail = () => {
       return;
     }
 
+    // Open Payment Gateway checkout modal
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = async (paymentData) => {
+    setShowPaymentModal(false);
     try {
       setBookingLoading(true);
       const res = await api.post('/appointments/book', {
@@ -138,6 +146,7 @@ const DoctorDetail = () => {
         timeSlot: selectedSlot,
         symptoms,
         consultationType,
+        ...paymentData,
       });
 
       setBookingSuccess(res.data.appointment);
@@ -276,7 +285,7 @@ const DoctorDetail = () => {
 
             {/* Success state */}
             {bookingSuccess ? (
-              <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-2xl text-center space-y-3">
+              <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-2xl text-center space-y-3.5">
                 <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto" />
                 <h3 className="text-base font-bold text-emerald-900">Appointment Confirmed!</h3>
                 <p className="text-xs text-emerald-700 leading-relaxed">
@@ -284,6 +293,34 @@ const DoctorDetail = () => {
                   <span className="font-semibold">{bookingSuccess.date}</span> at{' '}
                   <span className="font-semibold">{bookingSuccess.timeSlot}</span>.
                 </p>
+
+                {/* Payment Confirmation Receipt */}
+                <div className="p-3 bg-white rounded-xl border border-emerald-200 text-left text-xs space-y-1.5 shadow-xs">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500">Consultation Fee:</span>
+                    <span className="font-black text-slate-900">₹{bookingSuccess.amount || doctor.fees}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500">Payment Mode:</span>
+                    <span className="font-bold text-blue-700 uppercase">{bookingSuccess.paymentMethod || 'UPI'}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500">Payment Status:</span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                      bookingSuccess.paymentStatus === 'paid'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      {bookingSuccess.paymentStatus === 'paid' ? 'Paid' : 'Pay at Clinic'}
+                    </span>
+                  </div>
+                  {bookingSuccess.transactionId && (
+                    <div className="flex justify-between items-center pt-1 border-t border-slate-100">
+                      <span className="text-[10px] text-slate-400">Transaction ID:</span>
+                      <span className="font-mono text-[10px] text-slate-600 font-semibold">{bookingSuccess.transactionId}</span>
+                    </div>
+                  )}
+                </div>
 
                 {bookingSuccess.consultationType === 'video' && (
                   <div className="p-3 bg-white rounded-xl border border-emerald-200 text-xs text-slate-700">
@@ -445,17 +482,17 @@ const DoctorDetail = () => {
                 <button
                   type="submit"
                   disabled={bookingLoading || !selectedSlot}
-                  className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white text-sm font-bold rounded-xl shadow-lg shadow-blue-600/20 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white text-sm font-bold rounded-xl shadow-lg shadow-blue-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {bookingLoading ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Reserving Slot...
+                      Securing Slot & Booking...
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 className="w-4 h-4" />
-                      Confirm Booking (₹{doctor.fees})
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                      {selectedSlot ? `Proceed to Payment (₹${doctor.fees})` : 'Select a Slot to Continue'}
                     </>
                   )}
                 </button>
@@ -470,6 +507,17 @@ const DoctorDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Payment Gateway Modal */}
+      {showPaymentModal && (
+        <PaymentModal
+          doctor={doctor}
+          date={selectedDate}
+          timeSlot={selectedSlot}
+          onClose={() => setShowPaymentModal(false)}
+          onPaymentSuccess={handlePaymentSuccess}
+        />
+      )}
     </div>
   );
 };

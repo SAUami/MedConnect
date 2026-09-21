@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import PrescriptionTemplate from '../components/PrescriptionTemplate';
 
 const DoctorDashboard = () => {
   const { user } = useAuth();
@@ -26,13 +27,16 @@ const DoctorDashboard = () => {
   // Prescription Modal State
   const [prescriptionModalAppt, setPrescriptionModalAppt] = useState(null);
   const [diagnosis, setDiagnosis] = useState('');
+  const [chiefComplaint, setChiefComplaint] = useState('');
+  const [vitals, setVitals] = useState({ bp: '120/80', temp: '98.6', pulse: '72', weight: '65' });
   const [instructions, setInstructions] = useState('');
   const [followUpDate, setFollowUpDate] = useState('');
   const [medicines, setMedicines] = useState([
-    { name: '', dosage: '1 Tablet', frequency: 'Twice daily (After meals)', duration: '5 days' },
+    { name: '', dosage: '1 Tablet', frequency: 'Twice daily (After meals)', duration: '5 days', instructions: 'After meals with water' },
   ]);
   const [prescriptionSubmitting, setPrescriptionSubmitting] = useState(false);
   const [prescriptionError, setPrescriptionError] = useState('');
+  const [selectedViewPrescription, setSelectedViewPrescription] = useState(null);
 
   // Patient History Modal State
   const [historyModalPatient, setHistoryModalPatient] = useState(null);
@@ -68,7 +72,7 @@ const DoctorDashboard = () => {
   const handleAddMedicine = () => {
     setMedicines([
       ...medicines,
-      { name: '', dosage: '1 Tablet', frequency: 'Twice daily (After meals)', duration: '5 days' },
+      { name: '', dosage: '1 Tablet', frequency: 'Twice daily (After meals)', duration: '5 days', instructions: 'After meals with water' },
     ]);
   };
 
@@ -87,10 +91,12 @@ const DoctorDashboard = () => {
   const openPrescriptionModal = (appt) => {
     setPrescriptionModalAppt(appt);
     setDiagnosis('');
-    setInstructions('');
-    setFollowUpDate('');
+    setChiefComplaint(appt.symptoms || '');
+    setVitals({ bp: '120/80', temp: '98.6', pulse: '72', weight: '65' });
+    setInstructions('Maintain adequate hydration, light home-cooked diet, and complete medicine course as directed.');
+    setFollowUpDate('After 7 days / As needed');
     setMedicines([
-      { name: '', dosage: '1 Tablet', frequency: 'Twice daily (After meals)', duration: '5 days' },
+      { name: '', dosage: '1 Tablet', frequency: 'Twice daily (After meals)', duration: '5 days', instructions: 'After meals with water' },
     ]);
     setPrescriptionError('');
   };
@@ -113,9 +119,11 @@ const DoctorDashboard = () => {
 
     try {
       setPrescriptionSubmitting(true);
-      await api.post('/prescriptions/create', {
+      const res = await api.post('/prescriptions/create', {
         appointmentId: prescriptionModalAppt._id,
         diagnosis,
+        chiefComplaint,
+        vitals,
         medicines,
         instructions,
         followUpDate,
@@ -123,10 +131,23 @@ const DoctorDashboard = () => {
 
       setPrescriptionModalAppt(null);
       fetchAppointments();
+      if (res.data?.prescription) {
+        setSelectedViewPrescription(res.data.prescription);
+      }
     } catch (err) {
       setPrescriptionError(err.response?.data?.message || 'Failed to submit prescription');
     } finally {
       setPrescriptionSubmitting(false);
+    }
+  };
+
+  // View & Print Completed Prescription
+  const handleViewPrescription = async (apptId) => {
+    try {
+      const res = await api.get(`/prescriptions/appointment/${apptId}`);
+      setSelectedViewPrescription(res.data);
+    } catch (err) {
+      alert('Prescription not yet created or not found for this appointment.');
     }
   };
 
@@ -284,17 +305,28 @@ const DoctorDashboard = () => {
 
                       {/* Status */}
                       <td className="p-4">
-                        <span
-                          className={`px-2.5 py-1 rounded-lg font-bold text-[10px] uppercase tracking-wider ${
-                            appt.status === 'completed'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              : appt.status === 'confirmed'
-                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                              : 'bg-red-50 text-red-700 border border-red-200'
-                          }`}
-                        >
-                          {appt.status}
-                        </span>
+                        <div className="space-y-1">
+                          <span
+                            className={`px-2.5 py-1 rounded-lg font-bold text-[10px] uppercase tracking-wider inline-block ${
+                              appt.status === 'completed'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : appt.status === 'confirmed'
+                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                : 'bg-red-50 text-red-700 border border-red-200'
+                            }`}
+                          >
+                            {appt.status}
+                          </span>
+                          <div>
+                            <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                              appt.paymentStatus === 'paid'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-amber-100 text-amber-800'
+                            }`}>
+                              {appt.paymentStatus === 'paid' ? `Paid (${appt.paymentMethod || 'UPI'})` : 'Pay at Clinic'}
+                            </span>
+                          </div>
+                        </div>
                       </td>
 
                       {/* Actions */}
@@ -304,7 +336,7 @@ const DoctorDashboard = () => {
                             <>
                               <button
                                 onClick={() => openPrescriptionModal(appt)}
-                                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-sm flex items-center gap-1.5 transition-all"
+                                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
                               >
                                 <FileText className="w-3.5 h-3.5" />
                                 Write Rx
@@ -313,7 +345,7 @@ const DoctorDashboard = () => {
                               <button
                                 onClick={() => handleStatusUpdate(appt._id, 'cancelled')}
                                 title="Cancel consultation"
-                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                               >
                                 <XCircle className="w-4 h-4" />
                               </button>
@@ -321,9 +353,18 @@ const DoctorDashboard = () => {
                           )}
 
                           {appt.status === 'completed' && (
-                            <span className="text-[11px] text-emerald-600 font-bold flex items-center gap-1">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> Completed
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] text-emerald-600 font-bold flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Completed
+                              </span>
+                              <button
+                                onClick={() => handleViewPrescription(appt._id)}
+                                className="px-2.5 py-1.5 bg-[#076c72] hover:bg-[#065b60] text-white rounded-xl font-bold text-xs shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                                View / Print Rx
+                              </button>
+                            </div>
                           )}
                         </div>
                       </td>
@@ -378,7 +419,7 @@ const DoctorDashboard = () => {
               </div>
             )}
 
-            <form onSubmit={handlePrescriptionSubmit} className="space-y-6">
+            <form onSubmit={handlePrescriptionSubmit} className="space-y-5">
               {/* Diagnosis */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
@@ -390,20 +431,83 @@ const DoctorDashboard = () => {
                   value={diagnosis}
                   onChange={(e) => setDiagnosis(e.target.value)}
                   placeholder="e.g. Acute Bronchitis, Type-2 Diabetes Mellitus, Allergic Contact Dermatitis..."
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
                 />
+              </div>
+
+              {/* Chief Complaint */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  2. Chief Complaint / Reason for Visit
+                </label>
+                <input
+                  type="text"
+                  value={chiefComplaint}
+                  onChange={(e) => setChiefComplaint(e.target.value)}
+                  placeholder="e.g. High fever, persistent dry cough, body fatigue for 3 days..."
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              {/* Patient Vitals (BP, Temp, Pulse, Weight) */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  3. Patient Vitals
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <div className="bg-slate-50 p-2 rounded-xl border border-slate-200">
+                    <span className="text-[10px] text-slate-500 font-semibold block mb-0.5">BP (mmHg)</span>
+                    <input
+                      type="text"
+                      value={vitals.bp}
+                      onChange={(e) => setVitals({ ...vitals, bp: e.target.value })}
+                      placeholder="120/80"
+                      className="w-full bg-white p-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-800"
+                    />
+                  </div>
+                  <div className="bg-slate-50 p-2 rounded-xl border border-slate-200">
+                    <span className="text-[10px] text-slate-500 font-semibold block mb-0.5">Temp (°F)</span>
+                    <input
+                      type="text"
+                      value={vitals.temp}
+                      onChange={(e) => setVitals({ ...vitals, temp: e.target.value })}
+                      placeholder="98.6"
+                      className="w-full bg-white p-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-800"
+                    />
+                  </div>
+                  <div className="bg-slate-50 p-2 rounded-xl border border-slate-200">
+                    <span className="text-[10px] text-slate-500 font-semibold block mb-0.5">Pulse (/min)</span>
+                    <input
+                      type="text"
+                      value={vitals.pulse}
+                      onChange={(e) => setVitals({ ...vitals, pulse: e.target.value })}
+                      placeholder="72"
+                      className="w-full bg-white p-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-800"
+                    />
+                  </div>
+                  <div className="bg-slate-50 p-2 rounded-xl border border-slate-200">
+                    <span className="text-[10px] text-slate-500 font-semibold block mb-0.5">Weight (kg)</span>
+                    <input
+                      type="text"
+                      value={vitals.weight}
+                      onChange={(e) => setVitals({ ...vitals, weight: e.target.value })}
+                      placeholder="65"
+                      className="w-full bg-white p-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-800"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Dynamic Medicines Table */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                    2. Prescribe Medications
+                    4. Prescribe Medications (Rx)
                   </label>
                   <button
                     type="button"
                     onClick={handleAddMedicine}
-                    className="text-xs text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1 bg-blue-50 px-2.5 py-1 rounded-lg"
+                    className="text-xs text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1 bg-blue-50 px-2.5 py-1 rounded-lg cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" /> Add Medicine
                   </button>
@@ -415,14 +519,14 @@ const DoctorDashboard = () => {
                       key={idx}
                       className="grid grid-cols-12 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200 items-center text-xs"
                     >
-                      <div className="col-span-12 sm:col-span-4">
+                      <div className="col-span-12 sm:col-span-3">
                         <input
                           type="text"
                           required
                           placeholder="Medicine name (e.g. Paracetamol 650)"
                           value={med.name}
                           onChange={(e) => handleMedicineChange(idx, 'name', e.target.value)}
-                          className="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs"
+                          className="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold"
                         />
                       </div>
                       <div className="col-span-4 sm:col-span-2">
@@ -434,16 +538,16 @@ const DoctorDashboard = () => {
                           className="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs"
                         />
                       </div>
-                      <div className="col-span-4 sm:col-span-3">
+                      <div className="col-span-4 sm:col-span-2">
                         <input
                           type="text"
-                          placeholder="Frequency (e.g. 1-0-1 After meal)"
+                          placeholder="Frequency (Twice daily)"
                           value={med.frequency}
                           onChange={(e) => handleMedicineChange(idx, 'frequency', e.target.value)}
                           className="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs"
                         />
                       </div>
-                      <div className="col-span-3 sm:col-span-2">
+                      <div className="col-span-4 sm:col-span-2">
                         <input
                           type="text"
                           placeholder="Duration (5 days)"
@@ -452,12 +556,21 @@ const DoctorDashboard = () => {
                           className="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs"
                         />
                       </div>
+                      <div className="col-span-11 sm:col-span-2">
+                        <input
+                          type="text"
+                          placeholder="Instructions (After food)"
+                          value={med.instructions || ''}
+                          onChange={(e) => handleMedicineChange(idx, 'instructions', e.target.value)}
+                          className="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs"
+                        />
+                      </div>
                       <div className="col-span-1 text-center">
                         <button
                           type="button"
                           disabled={medicines.length === 1}
                           onClick={() => handleRemoveMedicine(idx)}
-                          className="p-1.5 text-slate-400 hover:text-red-600 disabled:opacity-30 rounded-lg"
+                          className="p-1.5 text-slate-400 hover:text-red-600 disabled:opacity-30 rounded-lg cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -567,6 +680,14 @@ const DoctorDashboard = () => {
             )}
           </div>
         </div>
+      )}
+
+      {/* MODAL 3: EXACT OFFICIAL MEDCONNECT PRESCRIPTION TEMPLATE */}
+      {selectedViewPrescription && (
+        <PrescriptionTemplate
+          prescription={selectedViewPrescription}
+          onClose={() => setSelectedViewPrescription(null)}
+        />
       )}
     </div>
   );

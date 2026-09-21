@@ -34,6 +34,14 @@ const doctorSchema = new mongoose.Schema(
       type: String,
       default: 'MedConnect Care Clinic, Central Avenue',
     },
+    regNo: {
+      type: String,
+      default: 'MCI/DMC-84920',
+    },
+    image: {
+      type: String,
+      default: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&auto=format&fit=crop&q=80',
+    },
     availability: [
       {
         day: {

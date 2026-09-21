@@ -36,6 +36,14 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: null,
     },
+    address: {
+      type: String,
+      default: 'Flat 402, Green Valley Apartments, Delhi NCR',
+    },
+    image: {
+      type: String,
+      default: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+    },
   },
   { timestamps: true }
 );

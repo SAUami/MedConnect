@@ -8,7 +8,7 @@ const { verifyToken, authorizeRoles } = require('../middleware/auth');
 // CREATE PRESCRIPTION (Doctor)
 router.post('/create', verifyToken, authorizeRoles('doctor'), async (req, res) => {
   try {
-    const { appointmentId, diagnosis, medicines, instructions, followUpDate } = req.body;
+    const { appointmentId, diagnosis, chiefComplaint, vitals, medicines, instructions, followUpDate } = req.body;
 
     if (!appointmentId || !diagnosis || !medicines || medicines.length === 0) {
       return res.status(400).json({ message: 'Appointment ID, diagnosis, and at least one medicine are required.' });
@@ -30,6 +30,8 @@ router.post('/create', verifyToken, authorizeRoles('doctor'), async (req, res) =
     let prescription = await Prescription.findOne({ appointment: appointmentId });
     if (prescription) {
       prescription.diagnosis = diagnosis;
+      prescription.chiefComplaint = chiefComplaint || appointment.symptoms || '';
+      prescription.vitals = vitals || { bp: '', temp: '', pulse: '', weight: '' };
       prescription.medicines = medicines;
       prescription.instructions = instructions || '';
       prescription.followUpDate = followUpDate || '';
@@ -40,6 +42,8 @@ router.post('/create', verifyToken, authorizeRoles('doctor'), async (req, res) =
         patient: appointment.patient,
         doctor: doctorProfile._id,
         diagnosis,
+        chiefComplaint: chiefComplaint || appointment.symptoms || '',
+        vitals: vitals || { bp: '', temp: '', pulse: '', weight: '' },
         medicines,
         instructions: instructions || '',
         followUpDate: followUpDate || '',
@@ -52,10 +56,10 @@ router.post('/create', verifyToken, authorizeRoles('doctor'), async (req, res) =
     await appointment.save();
 
     const populatedRx = await Prescription.findById(prescription._id)
-      .populate('patient', 'name email phone gender age')
+      .populate('patient', 'name email phone gender age address image')
       .populate({
         path: 'doctor',
-        populate: { path: 'user', select: 'name email phone' },
+        populate: { path: 'user', select: 'name email phone image' },
       })
       .populate('appointment');
 
@@ -72,9 +76,10 @@ router.post('/create', verifyToken, authorizeRoles('doctor'), async (req, res) =
 router.get('/my-prescriptions', verifyToken, async (req, res) => {
   try {
     const prescriptions = await Prescription.find({ patient: req.user._id })
+      .populate('patient', 'name email phone gender age address image')
       .populate({
         path: 'doctor',
-        populate: { path: 'user', select: 'name email phone' },
+        populate: { path: 'user', select: 'name email phone image' },
       })
       .populate('appointment')
       .sort({ createdAt: -1 });
@@ -89,10 +94,10 @@ router.get('/my-prescriptions', verifyToken, async (req, res) => {
 router.get('/appointment/:appointmentId', verifyToken, async (req, res) => {
   try {
     const prescription = await Prescription.findOne({ appointment: req.params.appointmentId })
-      .populate('patient', 'name email phone gender age')
+      .populate('patient', 'name email phone gender age address image')
       .populate({
         path: 'doctor',
-        populate: { path: 'user', select: 'name email phone' },
+        populate: { path: 'user', select: 'name email phone image' },
       })
       .populate('appointment');
 
@@ -120,9 +125,10 @@ router.get('/patient/:patientId', verifyToken, async (req, res) => {
     }
 
     const prescriptions = await Prescription.find({ patient: patientId })
+      .populate('patient', 'name email phone gender age address image')
       .populate({
         path: 'doctor',
-        populate: { path: 'user', select: 'name email phone' },
+        populate: { path: 'user', select: 'name email phone image' },
       })
       .populate('appointment')
       .sort({ createdAt: -1 });
