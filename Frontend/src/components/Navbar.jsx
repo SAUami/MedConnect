@@ -101,6 +101,19 @@ const Navbar = () => {
               </Link>
             )}
 
+            {isAdmin && (
+              <Link
+                to="/admin-dashboard"
+                className={`px-3.5 py-1.5 rounded-xl text-sm font-semibold transition-all ${
+                  isActive('/admin-dashboard')
+                    ? 'text-blue-700 bg-blue-50/90 border border-blue-200/60 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
+                }`}
+              >
+                Admin Portal
+              </Link>
+            )}
+
           </nav>
 
           {/* User Status / Auth Buttons */}
@@ -211,6 +224,15 @@ const Navbar = () => {
               className="block px-3 py-2 rounded-md text-base font-medium text-blue-600 hover:bg-blue-50"
             >
               Doctor Portal
+            </Link>
+          )}
+          {isAdmin && (
+            <Link
+              to="/admin-dashboard"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block px-3 py-2 rounded-md text-base font-medium text-blue-600 hover:bg-blue-50"
+            >
+              Admin Portal
             </Link>
           )}
 
